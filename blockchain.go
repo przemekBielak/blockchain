@@ -8,15 +8,14 @@ import (
 	"time"
 )
 
-type userData struct {
+type userDataT struct {
 	data string
 	version int
 } 
 
+
 // remove balance as a global and replace functions to use it as a pointer or other
 var balance = map[string]float64{}
-
-var data = userData {data: "test", version: 0}
 
 
 
@@ -35,16 +34,12 @@ func transfer(src string, dst string, amount float64) {
 	}
 }
 
-func check(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
-
-func updateUserData() {
+func updateUserData(userData *userDataT) {
 	// read file
 	dat, err := ioutil.ReadFile("./list.txt")
-	check(err)
+	if err != nil {
+		panic(err)
+	}
 	fileContent := string(dat)
 	lines := strings.Split(fileContent, "\n")
 
@@ -52,13 +47,15 @@ func updateUserData() {
 	rand.Seed(time.Now().UnixNano())
 
 	// update data with random line from txt file and increment version
-	data.data = lines[rand.Intn(len(lines))]
-	data.version++
+	userData.data = lines[rand.Intn(len(lines))]
+	userData.version++
 }
 
 func main() {
 
-	fmt.Println(data.data, data.version)
-	updateUserData()	
-	fmt.Println(data.data, data.version)
+	userData := userDataT{}
+
+	fmt.Println(userData.data, userData.version)
+	updateUserData(&userData)	
+	fmt.Println(userData.data, userData.version)
 }	
