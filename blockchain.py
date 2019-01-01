@@ -4,62 +4,70 @@ import sys
 import random
 import sched
 import time
+import socket
 
-BALANCES = {
+balances = {
     'user0': 1000,
     'user1': 2000,
     'user2': 3000,
 }
 
-PORT = 0
+user_data = {
+    'data': '',
+    'version_number': 0,
+}
 
 
 def add_user(user):
-    BALANCES[user] = 0
+    balances[user] = 0
 
 
 def get_balance(user):
-    return BALANCES[user]
+    return balances[user]
 
 
 def transfer(src, dst, amount):
-    if(BALANCES[src] >= amount):
-        BALANCES[dst] += amount
-        BALANCES[src] -= amount
+    if(balances[src] >= amount):
+        balances[dst] += amount
+        balances[src] -= amount
 
 
 # get random line from txt file
-def get_random_line():
+def update_user_data():
     file_path = './list.txt'
     test_file = open(file_path, 'r')
     lines = test_file.read().split('\n')
-    return random.choice(lines)
-
-
-def print_random_line(text_to_print):
-    print(get_random_line())
-    print(text_to_print)
+     
+    user_data['data'] = random.choice(lines)
+    user_data['version_number'] += 1
 
 
 def run_scheduler():
     while True:
         # call function cyclically
         s = sched.scheduler(time.time, time.sleep)
-        s.enter(1, 1, print_random_line, argument=('argument_test',))
+        s.enter(1, 1, update_user_data)
         s.run()
 
 
 def main(argv):
     # get port from command line argument
-    PORT = argv[1]
-    print('port: ' + PORT)
+    PORT = int(argv[1])
+    HOST = '127.0.0.1'  # The server's hostname or IP address
 
-    print(BALANCES)
-    add_user('user3')
-    transfer('user1', 'user3', 2500)
-    print(BALANCES)
+    print('server address: ' + HOST + ' server port: ' + str(PORT))
 
-    run_scheduler()
+    # run_scheduler()
+
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect((HOST, PORT))
+        while True:
+            time.sleep(1)
+            update_user_data()
+            s.sendall(user_data['data'].encode('utf-8'))
+            data = s.recv(1024)
+            print('Received', repr(data))
 
 
 if __name__ == '__main__':
