@@ -14,23 +14,18 @@ type userDataT struct {
 } 
 
 
-// remove balance as a global and replace functions to use it as a pointer or other
-var balance = map[string]float64{}
-
-
-
-func addUser(user string) {
-	balance[user] = 0
+func addUser(balances map[string]float64, user string) {
+	balances[user] = 0
 }
 
-func getBalance(user string) float64 {
-	return balance[user]
+func getBalance(balances map[string]float64, user string) float64 {
+	return balances[user]
 }
 
-func transfer(src string, dst string, amount float64) {
-	if balance[src] >= amount {
-		balance[dst] += amount
-		balance[src] -= amount
+func transfer(balances map[string]float64, src string, dst string, amount float64) {
+	if balances[src] >= amount {
+		balances[dst] += amount
+		balances[src] -= amount
 	}
 }
 
@@ -54,8 +49,17 @@ func updateUserData(userData *userDataT) {
 func main() {
 
 	userData := userDataT{}
+	balances := map[string]float64{"kasia" : 2000}
 
 	fmt.Println(userData.data, userData.version)
 	updateUserData(&userData)	
 	fmt.Println(userData.data, userData.version)
+
+	addUser(balances, "przemek")
+	fmt.Println(getBalance(balances, "przemek"))
+	fmt.Println(getBalance(balances, "kasia"))
+
+	transfer(balances, "kasia", "przemek", 100)
+	fmt.Println(getBalance(balances, "przemek"))
+	fmt.Println(getBalance(balances, "kasia"))
 }	
