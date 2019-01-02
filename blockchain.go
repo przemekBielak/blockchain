@@ -6,6 +6,7 @@ import (
 	"strings"
 	"math/rand"
 	"time"
+	"net/http"
 )
 
 type userDataT struct {
@@ -29,7 +30,7 @@ func transfer(balances map[string]float64, src string, dst string, amount float6
 	}
 }
 
-func updateUserData(userData *userDataT) {
+func (userData *userDataT) updateUserData() {
 	// read file
 	dat, err := ioutil.ReadFile("./list.txt")
 	if err != nil {
@@ -49,17 +50,29 @@ func updateUserData(userData *userDataT) {
 func main() {
 
 	userData := userDataT{}
-	balances := map[string]float64{"kasia" : 2000}
+	balances := map[string]float64{"user1" : 2000}
 
 	fmt.Println(userData.data, userData.version)
-	updateUserData(&userData)	
+	userData.updateUserData()
 	fmt.Println(userData.data, userData.version)
 
-	addUser(balances, "przemek")
-	fmt.Println(getBalance(balances, "przemek"))
-	fmt.Println(getBalance(balances, "kasia"))
+	addUser(balances, "user2")
+	fmt.Println(getBalance(balances, "user2"))
+	fmt.Println(getBalance(balances, "user1"))
 
-	transfer(balances, "kasia", "przemek", 100)
-	fmt.Println(getBalance(balances, "przemek"))
-	fmt.Println(getBalance(balances, "kasia"))
+	transfer(balances, "user1", "user2", 100)
+	fmt.Println(getBalance(balances, "user2"))
+	fmt.Println(getBalance(balances, "user1"))
+
+	resp, err := http.Get("http://localhost:7000/hello")
+	if err != nil {
+		fmt.Println("ERROR:", err)
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+
+
 }	
