@@ -14,5 +14,10 @@ func main() {
 
 func handleHello(w http.ResponseWriter, req *http.Request) {
 	log.Println("serving", req.Host, req.URL.Path)
+	fmt.Println("Remote address:", req.RemoteAddr)
+	fmt.Println("Request:", req)
+	fmt.Println(req.ParseForm())
+
 	fmt.Fprintln(w, "hello!")
+
 }
