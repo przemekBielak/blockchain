@@ -7,6 +7,8 @@ import (
 	"math/rand"
 	"time"
 	"net/http"
+	"net/url"
+	"strconv"
 )
 
 type userDataT struct {
@@ -50,29 +52,18 @@ func (userData *userDataT) updateUserData() {
 func main() {
 
 	userData := userDataT{}
-	balances := map[string]float64{"user1" : 2000}
-
-	fmt.Println(userData.data, userData.version)
 	userData.updateUserData()
-	fmt.Println(userData.data, userData.version)
+	fmt.Println(userData.data, strconv.Itoa(userData.version))
 
-	addUser(balances, "user2")
-	fmt.Println(getBalance(balances, "user2"))
-	fmt.Println(getBalance(balances, "user1"))
-
-	transfer(balances, "user1", "user2", 100)
-	fmt.Println(getBalance(balances, "user2"))
-	fmt.Println(getBalance(balances, "user1"))
-
-	resp, err := http.Get("http://localhost:7000/hello")
+	resp, err := http.PostForm("http://localhost:7000/hello", url.Values{"data": {userData.data}, "version": {strconv.Itoa(userData.version)}})
 	if err != nil {
 		fmt.Println("ERROR:", err)
 	}
 
 	defer resp.Body.Close()
 
-	// body, err := ioutil.ReadAll(resp.Body)
-	fmt.Println((resp))
+	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
 
 
 }	
