@@ -5,11 +5,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"strconv"
 )
 
 func main() {
-	resp, err := http.PostForm("http://localhost:7000/hello", url.Values{"data": {"test data"}, "version": {strconv.Itoa(1)}})
+	resp, err := http.PostForm("http://localhost:7000/addBlock", url.Values{"data": {"nowy blok"}})
 	if err != nil {
 		fmt.Println("ERROR:", err)
 	}

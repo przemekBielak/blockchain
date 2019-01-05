@@ -11,6 +11,7 @@ import (
 	"encoding/hex"
 	"time"
 	"errors"
+	"github.com/davecgh/go-spew/spew" // pretty printing
 )
 
 type block struct {
@@ -70,34 +71,27 @@ func appendToBlockchain(block block) error {
 func main() {
 	// create genesis block 
 	blockchain = append(blockchain, block{0, "genesis", "genesis", "genesis", "genesis"})
-	fmt.Println(blockchain[0])
 
 	block1 := generateBlock(blockchain[0], "data block 1")
 	err := appendToBlockchain(block1)
 	if err != nil {
 		fmt.Println(err)
-	} else {
-		fmt.Println(blockchain[len(blockchain) - 1])
-	}
+	} 
 
 	block2 := generateBlock(block1, "data block 2")
 	err = appendToBlockchain(block2)
 	if err != nil {
 		fmt.Println(err)
-	} else {
-		fmt.Println(block2)
 	}
 
 	err = appendToBlockchain(generateBlock(block2, "data block 3"))
 	if err != nil {
 		fmt.Println(err)
-	} else {
-		fmt.Println(blockchain[len(blockchain) - 1])
-	}
+	} 
 
 	// create server
-	http.HandleFunc("/hello", handlePost)
-	fmt.Println("Serving on port http//localhost:7000/hello")
+	http.HandleFunc("/addBlock", handlePost)
+	fmt.Println("Serving on port http//localhost:7000/addBlock")
 	log.Fatal(http.ListenAndServe("localhost:7000", nil))
 }
 
@@ -107,14 +101,22 @@ func handlePost(w http.ResponseWriter, req *http.Request) {
 	req.ParseForm()
 	
 	receivedData := req.Form.Get("data")
-	receivedVersion := req.Form.Get("version")
 
 	fmt.Println("Raw data:", req.Form)
 	fmt.Println("Received data:", receivedData)
-	fmt.Println("Received version:", receivedVersion)
 	fmt.Println("Type of data:", reflect.TypeOf(receivedData))
-	fmt.Println("Type of version:", reflect.TypeOf(receivedVersion))
+
+	// add received data to blockchain
+	err := appendToBlockchain(generateBlock(blockchain[len(blockchain) - 1], receivedData))
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, i := range blockchain {
+		spew.Dump(i)
+	}
+	
 
 	// send back data
-	fmt.Fprintf(w, "Data: %s, Version: %s", strings.ToUpper(receivedData), receivedVersion)
+	fmt.Fprintf(w, "Data: %s", strings.ToUpper(receivedData))
 }
