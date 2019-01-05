@@ -97,9 +97,7 @@ func main() {
 
 func handlePost(w http.ResponseWriter, req *http.Request) {
 	log.Println("serving", req.URL.Path)
-
 	req.ParseForm()
-	
 	receivedData := req.Form.Get("data")
 
 	fmt.Println("Raw data:", req.Form)
@@ -112,11 +110,11 @@ func handlePost(w http.ResponseWriter, req *http.Request) {
 		fmt.Println(err)
 	}
 
-	for _, i := range blockchain {
-		spew.Dump(i)
+	// range returns index, value pair. Index is ignored in this case
+	for _, val := range blockchain {
+		spew.Dump(val)
 	}
 	
-
 	// send back data
 	fmt.Fprintf(w, "Data: %s", strings.ToUpper(receivedData))
 }
