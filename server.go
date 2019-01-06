@@ -4,29 +4,29 @@ import (
 	"net/http"
 	"fmt"
 	"log"
-	"strings"
 	"strconv"
 	"reflect"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"time"
 	"errors"
-	"github.com/davecgh/go-spew/spew" // pretty printing
+    "github.com/davecgh/go-spew/spew" // pretty printing, install: go get -u github.com/davecgh/go-spew/spew
 )
 
 type block struct {
-	index int
-	timestamp string
-	data string
-	prevHash string
-	hash string
+	Index int
+	Timestamp string
+	Data string
+	PrevHash string
+	Hash string
 }
 
 var blockchain []block
 
 func calculateHash(block block) string {
 	hash := sha256.New()
-	dataToHash := strconv.Itoa(block.index) + block.timestamp + block.data + block.prevHash
+	dataToHash := strconv.Itoa(block.Index) + block.Timestamp + block.Data + block.PrevHash
 	hash.Write([]byte(dataToHash))
 	hashed := hash.Sum(nil)
 
@@ -35,11 +35,11 @@ func calculateHash(block block) string {
 
 func generateBlock(prevBlock block, data string) block {
 	var newBlock block
-	newBlock.index = prevBlock.index + 1
-	newBlock.timestamp = time.Now().String()
-	newBlock.data = data
-	newBlock.prevHash = prevBlock.hash
-	newBlock.hash = calculateHash(newBlock)
+	newBlock.Index = prevBlock.Index + 1
+	newBlock.Timestamp = time.Now().String()
+	newBlock.Data = data
+	newBlock.PrevHash = prevBlock.Hash
+	newBlock.Hash = calculateHash(newBlock)
 
 	return newBlock
 }
@@ -48,9 +48,9 @@ func generateBlock(prevBlock block, data string) block {
 func validateBlock(prevBlock block, newBlock block) bool {
 	retVal := true
 
-	if newBlock.index != prevBlock.index + 1 {
+	if newBlock.Index != prevBlock.Index + 1 {
 		retVal = false
-	} else if newBlock.prevHash != prevBlock.hash {
+	} else if newBlock.PrevHash != prevBlock.Hash {
 		retVal = false
 	}
 
@@ -89,14 +89,14 @@ func main() {
 		fmt.Println(err)
 	} 
 
-	// create server
 	http.HandleFunc("/addBlock", handlePost)
-	fmt.Println("Serving on port http//localhost:7000/addBlock")
+	http.HandleFunc("/getBlockchain", handleGet)
+
+	fmt.Println("Serving on: http//localhost:7000/")
 	log.Fatal(http.ListenAndServe("localhost:7000", nil))
 }
 
 func handlePost(w http.ResponseWriter, req *http.Request) {
-	log.Println("serving", req.URL.Path)
 	req.ParseForm()
 	receivedData := req.Form.Get("data")
 
@@ -114,7 +114,16 @@ func handlePost(w http.ResponseWriter, req *http.Request) {
 	for _, val := range blockchain {
 		spew.Dump(val)
 	}
-	
-	// send back data
-	fmt.Fprintf(w, "Data: %s", strings.ToUpper(receivedData))
+}
+
+func handleGet(w http.ResponseWriter, req *http.Request) {
+
+	// create JSON from blockchain struct
+	b, err := json.Marshal(blockchain)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+
+	blockchainJSONString := string(b)
+	fmt.Fprintf(w, blockchainJSONString)
 }
