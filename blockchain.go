@@ -1,50 +1,72 @@
-package main
+// package implements blockchain functionality
+package blockchain
 
 import (
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"os"
-	"strings"
-	"encoding/json"
-	"bytes"
+	"crypto/sha256"
+	"strconv"
+	"encoding/hex"
+	"time"
+	"errors"
 )
 
-const serverAddress string = "http://localhost:7000"
-
-func postToBlockchain(data string) {
-	resp, err := http.PostForm(serverAddress + "/addBlock", url.Values{"data": {data}})
-	if err != nil {
-		fmt.Println("ERROR:", err)
-	}
-
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	fmt.Println(string(body))
+type Block struct {
+	Index int
+	Timestamp string
+	Data string
+	PrevHash string
+	Hash string
 }
 
-func getBlockchain() {
-	resp, err := http.Get(serverAddress + "/getBlockchain")
-	if err != nil {
-		fmt.Println("ERROR:", err)
-	}
+// Append method receiver has to be of type []Block. Alias Blockchain was created just for that
+type Blockchain []Block
 
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
 
-	// indent JSON file to be easy to read
-	var out bytes.Buffer
-	json.Indent(&out, body, "-->", "\t")
+func calculateHash(block Block) string {
+	hash := sha256.New()
+	dataToHash := strconv.Itoa(block.Index) + block.Timestamp + block.Data + block.PrevHash
+	hash.Write([]byte(dataToHash))
+	hashed := hash.Sum(nil)
 
-	out.WriteTo(os.Stdout)
+	return hex.EncodeToString(hashed)
 }
 
-func main() {
-	// Join command line arguments as a block data
-	data := strings.Join(os.Args[1:], " ")
+// false - block invalid, true - block valid
+func validateBlock(prevBlock Block, newBlock Block) bool {
+	retVal := true
 
-	postToBlockchain(data)
-	getBlockchain()
-}	
+	if newBlock.Index != prevBlock.Index + 1 {
+		retVal = false
+	} else if newBlock.PrevHash != prevBlock.Hash {
+		retVal = false
+	}
+
+	return retVal
+}
+
+func GenerateBlock(blockchain Blockchain, data string) Block {
+	lastBlock := blockchain[len(blockchain) - 1]
+	var newBlock Block
+	newBlock.Index = lastBlock.Index + 1
+	newBlock.Timestamp = time.Now().String()
+	newBlock.Data = data
+	newBlock.PrevHash = lastBlock.Hash
+	newBlock.Hash = calculateHash(newBlock)
+
+	return newBlock
+}
+
+// Create new block with data and append it to blockchain
+func (blockchain *Blockchain) Append(data string) error {
+	var err error
+
+	block := GenerateBlock(*blockchain, data)
+
+	item := (*blockchain)[len(*blockchain) - 1]
+	if validateBlock(item, block) {
+		*blockchain = append(*blockchain, block)
+	} else {
+		err = errors.New("Adding to blockchain failed")
+	}
+
+	return err
+}
