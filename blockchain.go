@@ -1,5 +1,5 @@
 // package implements blockchain functionality
-package blockchain
+package main
 
 import (
 	"crypto/sha256"
