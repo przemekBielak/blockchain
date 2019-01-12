@@ -1,5 +1,5 @@
 // package implements blockchain functionality
-package main
+package blockchain
 
 import (
 	"crypto/sha256"
@@ -69,4 +69,10 @@ func (blockchain *Blockchain) Append(data string) error {
 	}
 
 	return err
+}
+
+func Verify(oldBlockchain *Blockchain, newBlockchain *Blockchain) {
+	if len(*newBlockchain) > len(*oldBlockchain) {
+		*oldBlockchain = *newBlockchain
+	}
 }
